@@ -67,6 +67,16 @@
     function get_random(min, max) {
         return Math.floor(Math.random() * (max - min) + min);
     }
+    function add_money(count, block, delay, delay_off) {
+        setTimeout((() => {
+            document.querySelectorAll(block).forEach((el => el.textContent = +sessionStorage.getItem("money") + count));
+            document.querySelectorAll(block).forEach((el => el.classList.add("_anim-add-money")));
+            sessionStorage.setItem("money", +sessionStorage.getItem("money") + count);
+        }), delay);
+        setTimeout((() => {
+            document.querySelectorAll(block).forEach((el => el.classList.remove("_anim-add-money")));
+        }), delay_off);
+    }
     let anim_items = document.querySelectorAll(".icon-anim img");
     function get_random_animate() {
         let number = get_random(0, 3);
@@ -133,9 +143,13 @@
         card_numbers: [],
         card_suits: [],
         count_collision: 0,
-        arr_collision: []
+        arr_index: [],
+        arr_collision: [],
+        count_win: 0,
+        max_bet: 0
     };
     let script_images = document.querySelectorAll(".cards-game__image");
+    let table_rows = document.querySelectorAll(".table__row");
     if (document.querySelector(".game")) {
         write_card_tail();
         write_button_text();
@@ -189,21 +203,17 @@
             if (0 == i) el.append(image_1); else if (1 == i) el.append(image_2); else if (2 == i) el.append(image_3); else if (3 == i) el.append(image_4); else if (4 == i) el.append(image_5);
         }));
     }
-    function create_write_card(arr, count) {
-        let card = arr[count];
-        let block = document.createElement("img");
-        block.setAttribute("src", `img/cards/${card}.png`);
-        block.setAttribute("data-number", card);
-        block.setAttribute("alt", "Image");
-        block.classList.add("tail");
-        return block;
-    }
     function create_cards() {
-        get_random_number();
-        get_random_number();
-        get_random_number();
-        get_random_number();
-        get_random_number();
+        let count = 0;
+        for (let i = 0; i < 5; i++) {
+            count++;
+            console.log(`${count} раз определяем карту`);
+            get_random_number(1);
+        }
+        console.log(">>>>>>>>>>>>>>>>>>>>>>>>Сразу после создания<<<<<<<<<<<<<<<<<<<<<<<<");
+        console.log(`config_game.card_numbers - ${config_game.card_numbers}`);
+        console.log(`config_game.card_suits - ${config_game.card_suits}`);
+        console.log(">>>>>>>>>>>>>>>>>>>>>>>>Сразу после создания<<<<<<<<<<<<<<<<<<<<<<<<");
         let images = document.querySelectorAll(".cards-game__image");
         images[0].append(create_write_card(config_game.card_current_arr, 0));
         images[0].dataset.number = config_game.card_numbers[0];
@@ -221,21 +231,64 @@
         images[4].dataset.number = config_game.card_numbers[4];
         images[4].dataset.suit = config_game.card_suits[4];
     }
-    function get_random_number() {
+    function create_write_card(arr, count) {
+        let card = arr[count];
+        let block = document.createElement("img");
+        block.setAttribute("src", `img/cards/${card}.png`);
+        block.setAttribute("data-number", card);
+        block.setAttribute("alt", "Image");
+        block.classList.add("tail");
+        return block;
+    }
+    function create_change_cards() {
+        config_game.arr_collision = [];
+        script_images.forEach(((el, i) => {
+            if (!el.classList.contains("_selected")) {
+                el.classList.remove("_rotate");
+                el.classList.add("_unrotate");
+                config_game.card_current_arr.length;
+                let current_card1_arr = get_random_number(2, i);
+                console.log(current_card1_arr);
+                console.log(`config_game.card_current_arr - ${config_game.card_current_arr}`);
+                setTimeout((() => {
+                    script_images[i].append(create_write_card(config_game.card_current_arr, i));
+                    el.classList.remove("_unrotate");
+                    el.classList.add("_rotate");
+                    el.dataset.number = config_game.card_numbers[i];
+                    el.dataset.suit = config_game.card_suits[i];
+                }), 500);
+            }
+        }));
+    }
+    function get_random_number(mode, index) {
         let arr = [ "a", "a", "a", "a", "b", "b", "b", "b", "c", "c", "c", "c", "d", "d", "d", "d", "j" ];
-        let suit_number = get_random(1, 17);
+        let suit_number = get_random(0, 17);
+        console.log(`suit_number - ${suit_number}`);
         let card_suit = arr[suit_number];
-        let card_number = get_random(2, 14);
+        console.log(`card_suit - ${card_suit}`);
+        let card_number = get_random(2, 15);
+        console.log(`card_number - ${card_number}`);
+        console.log("==================================================");
         let card = "";
         if ("j" == card_suit) {
             card = "15-j";
             card_number = 15;
             card_suit = "j";
         } else card = `${card_number}-${card_suit}`;
-        if (config_game.card_current_arr.includes(card)) return get_random_number();
-        config_game.card_numbers.push(card_number);
-        config_game.card_suits.push(card_suit);
-        config_game.card_current_arr.push(card);
+        if (config_game.card_current_arr.includes(card)) {
+            console.log("Если выпала повторка - запускаем функцию повторно");
+            return get_random_number(mode, index);
+        }
+        if (1 == mode) {
+            config_game.card_numbers.push(card_number);
+            config_game.card_suits.push(card_suit);
+            config_game.card_current_arr.push(card);
+        } else if (2 == mode) {
+            config_game.card_numbers[index] = card_number;
+            config_game.card_suits[index] = card_suit;
+            config_game.card_current_arr[index] = card;
+        }
+        console.log(`config_game.card_current_arr - ${config_game.card_current_arr}`);
         return card;
     }
     function show_cards() {
@@ -253,65 +306,273 @@
             }), 1e3);
         }));
     }
-    function check_collisions_1() {
-        let images = document.querySelectorAll(".cards-game__image");
-        if (config_game.card_numbers[0] == config_game.card_numbers[1] || config_game.card_numbers[0] == config_game.card_numbers[2] || config_game.card_numbers[0] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[4]) {
-            console.log("Первая  карты равны");
-            config_game.count_collision += 1;
-            config_game.arr_collision.push(config_game.card_numbers[0]);
+    function check_collisions() {
+        console.log(`config_game.card_numbers (перед сортировкой) - ${config_game.card_numbers}`);
+        let arr_sort = config_game.card_numbers.map((function(el) {
+            return this.splice(this.indexOf(Math.min(...this)), 1)[0];
+        }), config_game.card_numbers.slice());
+        console.log(`arr_sort - ${arr_sort}`);
+        document.querySelectorAll(".cards-game__image").forEach((el => console.log(el)));
+        if (config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4]) {
+            console.log("Все карты одной масти");
+            if ((10 == config_game.card_numbers[0] || 11 == config_game.card_numbers[0] || 12 == config_game.card_numbers[0] || 13 == config_game.card_numbers[0] || 14 == config_game.card_numbers[0]) && (10 == config_game.card_numbers[1] || 11 == config_game.card_numbers[1] || 12 == config_game.card_numbers[1] || 13 == config_game.card_numbers[1] || 14 == config_game.card_numbers[1]) && (10 == config_game.card_numbers[2] || 11 == config_game.card_numbers[2] || 12 == config_game.card_numbers[2] || 13 == config_game.card_numbers[2] || 14 == config_game.card_numbers[2]) && (10 == config_game.card_numbers[3] || 11 == config_game.card_numbers[3] || 12 == config_game.card_numbers[3] || 13 == config_game.card_numbers[3] || 14 == config_game.card_numbers[3]) && (10 == config_game.card_numbers[4] || 11 == config_game.card_numbers[4] || 12 == config_game.card_numbers[4] || 13 == config_game.card_numbers[4] || 14 == config_game.card_numbers[4])) {
+                console.log("flash royal");
+                config_game.count_win = 750 * +sessionStorage.getItem("current-bet");
+                document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+                document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+                config_game.max_bet = 1;
+                config_game.count_collision = 1;
+                script_images.forEach((el => {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }));
+                table_rows.forEach((el => {
+                    if (11 == el.dataset.prize) el.classList.add("_active");
+                }));
+                return false;
+            }
         }
-        if (config_game.card_numbers[1] == config_game.card_numbers[2] || config_game.card_numbers[1] == config_game.card_numbers[3] || config_game.card_numbers[1] == config_game.card_numbers[4]) {
-            console.log("2 и  карты равны");
-            config_game.count_collision += 1;
-            config_game.arr_collision.push(config_game.card_numbers[1]);
+        if (config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4]) {
+            console.log("Четыре карты одного достоинства");
+            if (15 == config_game.card_numbers[0] || 15 == config_game.card_numbers[1] || 15 == config_game.card_numbers[2] || 15 == config_game.card_numbers[3] || 15 == config_game.card_numbers[4]) {
+                console.log("Five of a kind - джокер и Четыре карты одного достоинства");
+                config_game.count_win = 200 * +sessionStorage.getItem("current-bet");
+                document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+                document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+                config_game.max_bet = 1;
+                config_game.count_collision = 1;
+                script_images.forEach((el => {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }));
+                table_rows.forEach((el => {
+                    if (10 == el.dataset.prize) el.classList.add("_active");
+                }));
+                return false;
+            }
         }
-        if (config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[2] == config_game.card_numbers[4]) {
-            console.log("3 и  карты равны");
-            config_game.count_collision += 1;
-            config_game.arr_collision.push(config_game.card_numbers[2]);
+        if (config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] || config_game.card_suits[0] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4] || config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4] || config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4] || config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[4]) {
+            console.log("Четыре карты одной масти");
+            if ((11 == config_game.card_numbers[0] || 12 == config_game.card_numbers[0] || 13 == config_game.card_numbers[0] || 14 == config_game.card_numbers[0] || 15 == config_game.card_numbers[0]) && (11 == config_game.card_numbers[1] || 12 == config_game.card_numbers[1] || 13 == config_game.card_numbers[1] || 14 == config_game.card_numbers[1] || 15 == config_game.card_numbers[1]) && (11 == config_game.card_numbers[2] || 12 == config_game.card_numbers[2] || 13 == config_game.card_numbers[2] || 14 == config_game.card_numbers[2] || 15 == config_game.card_numbers[2]) && (11 == config_game.card_numbers[3] || 12 == config_game.card_numbers[3] || 13 == config_game.card_numbers[3] || 14 == config_game.card_numbers[3] || 15 == config_game.card_numbers[3]) && (11 == config_game.card_numbers[4] || 12 == config_game.card_numbers[4] || 13 == config_game.card_numbers[4] || 14 == config_game.card_numbers[4] || 15 == config_game.card_numbers[4])) {
+                console.log("Five of a kind - джокер и одна масть от валета до туза");
+                config_game.count_win = 100 * +sessionStorage.getItem("current-bet");
+                document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+                document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+                config_game.max_bet = 1;
+                config_game.count_collision = 1;
+                script_images.forEach((el => {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }));
+                table_rows.forEach((el => {
+                    if (9 == el.dataset.prize) el.classList.add("_active");
+                }));
+                return false;
+            }
         }
-        if (config_game.card_numbers[3] == config_game.card_numbers[4]) {
-            console.log("4 и  карты равны");
-            config_game.count_collision += 1;
-            config_game.arr_collision.push(config_game.card_numbers[3]);
-        }
-        images.forEach((el => {
-            if (el.dataset.number == config_game.arr_collision[0]) {
+        if (arr_sort[0] == arr_sort[1] - 1 && arr_sort[0] == arr_sort[2] - 2 && arr_sort[0] == arr_sort[3] - 3 && arr_sort[0] == arr_sort[4] - 4) if (config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4]) {
+            console.log("Straight flush - пять последовательных карт одной масти");
+            config_game.count_win = 50 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            config_game.max_bet = 1;
+            config_game.count_collision = 1;
+            script_images.forEach((el => {
                 el.append(create_coin());
                 el.classList.add("_selected");
+            }));
+            table_rows.forEach((el => {
+                if (8 == el.dataset.prize) el.classList.add("_active");
+            }));
+            return false;
+        }
+        if (config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4]) {
+            console.log("Четыре карты одного достоинства");
+            config_game.count_win = 17 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            table_rows.forEach((el => {
+                if (7 == el.dataset.prize) el.classList.add("_active");
+            }));
+            config_game.count_collision = 1;
+            if (config_game.card_numbers[0] == config_game.card_numbers[1]) config_game.arr_collision.push(config_game.card_numbers[0]); else if (config_game.card_numbers[1] == config_game.card_numbers[2]) config_game.arr_collision.push(config_game.card_numbers[1]);
+            script_images.forEach((el => {
+                if (el.dataset.number == config_game.arr_collision[0]) {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }
+            }));
+            return false;
+        }
+        if (config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4]) {
+            console.log("Три карты одного достоинства");
+            if (arr_sort[0] == arr_sort[1] && arr_sort[1] == arr_sort[2] && arr_sort[3] == arr_sort[4] || arr_sort[2] == arr_sort[3] && arr_sort[3] == arr_sort[4] && arr_sort[0] == arr_sort[1]) {
+                console.log("Три карты одного достоинства и две другого достоинства");
+                config_game.arr_collision.push(arr_sort[2]);
+                script_images.forEach((el => {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }));
+                config_game.count_win = 7 * +sessionStorage.getItem("current-bet");
+                document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+                document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+                table_rows.forEach((el => {
+                    if (6 == el.dataset.prize) el.classList.add("_active");
+                }));
+                config_game.max_bet = 1;
+                config_game.count_collision = 1;
+                return false;
             }
+        }
+        if (config_game.card_suits[0] == config_game.card_suits[1] && config_game.card_suits[1] == config_game.card_suits[2] && config_game.card_suits[2] == config_game.card_suits[3] && config_game.card_suits[3] == config_game.card_suits[4]) {
+            console.log(" Flush - Любые пять карт одной масти");
+            config_game.count_win = 5 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            config_game.max_bet = 1;
+            config_game.count_collision = 1;
+            script_images.forEach((el => {
+                el.append(create_coin());
+                el.classList.add("_selected");
+            }));
+            table_rows.forEach((el => {
+                if (5 == el.dataset.prize) el.classList.add("_active");
+            }));
+            return false;
+        }
+        if (arr_sort[0] == arr_sort[1] - 1 && arr_sort[0] == arr_sort[2] - 2 && arr_sort[0] == arr_sort[3] - 3 && arr_sort[0] == arr_sort[4] - 4) {
+            console.log("Straight - пять последовательных карт");
+            config_game.count_win = 4 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            config_game.max_bet = 1;
+            config_game.count_collision = 1;
+            script_images.forEach((el => {
+                el.append(create_coin());
+                el.classList.add("_selected");
+            }));
+            table_rows.forEach((el => {
+                if (4 == el.dataset.prize) el.classList.add("_active");
+            }));
+            return false;
+        }
+        if (config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[2] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[1] && config_game.card_numbers[1] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[0] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4] || config_game.card_numbers[0] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[3] || config_game.card_numbers[1] == config_game.card_numbers[2] && config_game.card_numbers[2] == config_game.card_numbers[4] || config_game.card_numbers[1] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4] || config_game.card_numbers[2] == config_game.card_numbers[3] && config_game.card_numbers[3] == config_game.card_numbers[4]) {
+            console.log("Три карты одного достоинства");
+            if (arr_sort[0] == arr_sort[1] && arr_sort[1] == arr_sort[2] || arr_sort[2] == arr_sort[3] && arr_sort[3] == arr_sort[4] || arr_sort[1] == arr_sort[2] && arr_sort[2] == arr_sort[3]) {
+                console.log("Три карты одного достоинства");
+                config_game.arr_collision.push(arr_sort[2]);
+                script_images.forEach((el => {
+                    if (el.dataset.number == config_game.arr_collision[0]) {
+                        el.append(create_coin());
+                        el.classList.add("_selected");
+                    }
+                }));
+                config_game.count_win = 3 * +sessionStorage.getItem("current-bet");
+                document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+                document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+                table_rows.forEach((el => {
+                    if (3 == el.dataset.prize) el.classList.add("_active");
+                }));
+                config_game.count_collision = 1;
+                return false;
+            }
+        }
+        if (arr_sort[0] == arr_sort[1] && arr_sort[2] == arr_sort[3] || arr_sort[1] == arr_sort[2] && arr_sort[3] == arr_sort[4] || arr_sort[0] == arr_sort[1] && arr_sort[3] == arr_sort[4]) {
+            console.log("две пары");
+            config_game.arr_collision.push(arr_sort[1]);
+            config_game.arr_collision.push(arr_sort[3]);
+            console.log(config_game.arr_collision);
+            script_images.forEach((el => {
+                if (el.dataset.number == config_game.arr_collision[0] || el.dataset.number == config_game.arr_collision[1]) {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }
+            }));
+            config_game.count_win = 2 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            table_rows.forEach((el => {
+                if (2 == el.dataset.prize) el.classList.add("_active");
+            }));
+            config_game.count_collision = 1;
+            return false;
+        }
+        if (arr_sort[0] == arr_sort[1]) config_game.arr_collision.push(arr_sort[0]); else if (arr_sort[1] == arr_sort[2]) config_game.arr_collision.push(arr_sort[1]); else if (arr_sort[2] == arr_sort[3]) config_game.arr_collision.push(arr_sort[2]); else if (arr_sort[3] == arr_sort[4]) config_game.arr_collision.push(arr_sort[3]);
+        if (config_game.arr_collision.length > 0) {
+            console.log("одна пара");
+            console.log(config_game.arr_collision);
+            script_images.forEach((el => {
+                console.log(`el - ${el}`);
+                console.log(`el - ${el.dataset.number}`);
+                if (el.dataset.number == config_game.arr_collision[0]) {
+                    el.append(create_coin());
+                    el.classList.add("_selected");
+                }
+            }));
+            config_game.count_win = 1 * +sessionStorage.getItem("current-bet");
+            document.querySelector(".footer-game__count-win").textContent = config_game.count_win;
+            document.querySelector(".footer-game__win-box-inner").classList.add("_active");
+            table_rows.forEach((el => {
+                if (1 == el.dataset.prize) el.classList.add("_active");
+            }));
+            config_game.count_collision = 1;
+            return false;
+        }
+    }
+    function find_cards_without_collision() {
+        script_images.forEach((el => {
+            if (!el.classList.contains("_selected")) config_game.arr_index.push(el.dataset.index);
         }));
+        console.log(`config_game.arr_index (здесь индексы карт без коллизии) - ${config_game.arr_index}`);
     }
     function create_coin() {
         let coin = document.createElement("div");
         coin.classList.add("cards-game__coin");
+        setTimeout((() => {
+            coin.classList.add("_active");
+        }), 500);
         let image = document.createElement("img");
         image.setAttribute("src", `img/icons/coin-3.png`);
         coin.append(image);
         return coin;
     }
-    function draw_inner_button() {
+    function draw_inner_draw_button() {
+        config_game.program = 2;
+        write_button_text();
+    }
+    function draw_inner_collect_button() {
         let images_2 = [];
         script_images.forEach((el => {
-            if (!el.classList.contains("_selected") && config_game.count_collision > 0) {
-                console.log(el);
-                images_2.push(el);
-            }
+            if (!el.classList.contains("_selected") && config_game.count_collision > 0) images_2.push(el);
         }));
-        console.log(images_2);
-        if (images_2.length > 0) {
-            config_game.program = 2;
-            write_button_text();
-        }
+        if (images_2.length > 0 || 1 == config_game.max_bet) config_game.program = 3; else config_game.program = 1;
+        write_button_text();
+        console.log("==================================================================================");
     }
     function reset_game() {
+        document.querySelectorAll(".cards-game__image img").forEach((el => {
+            if (el.classList.contains("tail")) el.remove();
+        }));
         config_game.program = 1;
         config_game.card_current_arr = [];
         config_game.card_numbers = [];
         config_game.card_suits = [];
         config_game.count_collision = 0;
         config_game.arr_collision = [];
+        config_game.arr_index = [];
+        config_game.max_bet = 0;
         document.querySelectorAll(".cards-game__image").forEach((el => el.classList.remove("_rotate")));
+        document.querySelectorAll(".cards-game__image").forEach((el => {
+            el.removeAttribute("data-number");
+            el.removeAttribute("data-suit");
+            if (el.classList.contains("_selected")) el.classList.remove("_selected");
+        }));
+        write_button_text();
+        if (document.querySelector(".footer-game__win-box-inner").classList.contains("_active")) document.querySelector(".footer-game__win-box-inner").classList.remove("_active");
+        if (document.querySelector(".cards-game__coin")) document.querySelectorAll(".cards-game__coin").forEach((el => el.remove()));
+        if (document.querySelector(".table__row")) table_rows.forEach((el => {
+            if (el.classList.contains("_active")) el.classList.remove("_active");
+        }));
     }
     document.addEventListener("click", (e => {
         let targetElement = e.target;
@@ -351,15 +612,43 @@
                 show_cards();
             }), 1e3);
             setTimeout((() => {
-                check_collisions_1();
-                draw_inner_button();
+                check_collisions();
+                if (0 == config_game.max_bet) {
+                    draw_inner_draw_button();
+                    find_cards_without_collision();
+                } else draw_inner_collect_button();
             }), 3e3);
             setTimeout((() => {
                 console.log(`config_game.arr_collision (здесь номера, которые совпали) - ${config_game.arr_collision}`);
                 console.log(`config_game.card_numbers (здесь все номера выпавших карт) - ${config_game.card_numbers}`);
                 console.log(`config_game.card_suits (здесь все масти выпавших карт) - ${config_game.card_suits}`);
                 console.log(`config_game.count_collision (количество коллизий) - ${config_game.count_collision}`);
+                console.log("==================================================================");
             }), 4e3);
+        }
+        if (targetElement.closest(".cards-game__button") && 2 == targetElement.closest(".cards-game__button").dataset.target) {
+            setTimeout((() => {
+                create_change_cards();
+                if (document.querySelector(".cards-game__coin")) document.querySelectorAll(".cards-game__coin").forEach((el => el.remove()));
+                if (document.querySelector(".table__row")) table_rows.forEach((el => {
+                    if (el.classList.contains("_active")) el.classList.remove("_active");
+                }));
+            }), 1e3);
+            setTimeout((() => {
+                console.log(`config_game.arr_collision (здесь номера, которые совпали) - ${config_game.arr_collision}`);
+                console.log(`config_game.card_numbers (здесь все номера выпавших карт) - ${config_game.card_numbers}`);
+                console.log(`config_game.card_suits (здесь все масти выпавших карт) - ${config_game.card_suits}`);
+                console.log(`config_game.count_collision (количество коллизий) - ${config_game.count_collision}`);
+                console.log("==================================================================");
+            }), 2e3);
+            setTimeout((() => {
+                check_collisions();
+                draw_inner_collect_button();
+            }), 3e3);
+        }
+        if (targetElement.closest(".cards-game__button") && 3 == targetElement.closest(".cards-game__button").dataset.target) {
+            add_money(config_game.count_win, ".check", 1e3, 2e3);
+            reset_game();
         }
     }));
     window["FLS"] = true;

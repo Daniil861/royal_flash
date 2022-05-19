@@ -219,6 +219,11 @@ body._hold {
   overflow: auto;
   background: url("../img/other/bg-canvas.png") 84% -61px/108% 120% no-repeat;
 }
+@media (min-height: 40.625em) {
+  .acces-preloader {
+    background: url("../img/other/bg-canvas.png") 84% -130px/108% 120% no-repeat;
+  }
+}
 .acces-preloader._hide {
   display: none;
 }
@@ -878,6 +883,9 @@ body._hold {
 .table__row:nth-child(even) {
   background-color: rgba(116, 81, 81, 0.1);
 }
+.table__row._active {
+  animation: color_blik 0.4s ease-in-out 5 forwards;
+}
 .table__text {
   font-weight: 400;
   font-size: 0.6875rem;
@@ -1047,6 +1055,12 @@ body._hold {
 .cards-game__image._rotate .tail {
   animation: back-rotation 0.5s linear forwards;
 }
+.cards-game__image._unrotate .head {
+  animation: front-rotation-back 0.5s linear forwards;
+}
+.cards-game__image._unrotate .tail {
+  animation: back-rotation-back 0.5s linear forwards;
+}
 @supports (width: clamp( 2.5rem , -0.7083333333rem  +  9.3333333333vw , 5.125rem )) {
   .cards-game__image img {
     width: clamp( 2.5rem , -0.7083333333rem  +  9.3333333333vw , 5.125rem );
@@ -1059,10 +1073,17 @@ body._hold {
 }
 .cards-game__coin {
   position: absolute;
-  top: 50%;
+  top: 10%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(-90deg);
+  opacity: 0;
+  transition: all 0.6s ease 0s;
   z-index: 6;
+}
+.cards-game__coin._active {
+  opacity: 1;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(0deg);
 }
 .cards-game__coin img {
   width: 3rem;
@@ -1110,6 +1131,14 @@ body._hold {
   line-height: 1.46875;
   color: #ffb800;
   padding-top: 0.5rem;
+  position: relative;
+  top: 20px;
+  opacity: 0;
+  transition: all 0.3s ease 0s;
+}
+.footer-game__win-box-inner._active {
+  top: 0px;
+  opacity: 1;
 }
 .footer-game__win-box-inner img {
   position: relative;
@@ -1226,5 +1255,26 @@ body._hold {
   }
   100% {
     transform: rotateY(360deg);
+  }
+}
+@keyframes front-rotation-back {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+@keyframes back-rotation-back {
+  0% {
+    transform: rotateY(360deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+@keyframes color_blik {
+  100% {
+    background-color: rgba(235, 232, 126, 0.6);
   }
 }

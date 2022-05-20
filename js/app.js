@@ -226,7 +226,7 @@
     function create_write_card(arr, count) {
         let card = arr[count];
         let block = document.createElement("img");
-        block.setAttribute("src", `img/cards/${card}.png`);
+        if (document.documentElement.classList.contains("webp")) block.setAttribute("src", `img/cards/${card}.webp`); else block.setAttribute("src", `img/cards/${card}.png`);
         block.setAttribute("data-number", card);
         block.setAttribute("alt", "Image");
         block.classList.add("tail");

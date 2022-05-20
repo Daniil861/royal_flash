@@ -253,9 +253,11 @@
                 setTimeout((() => {
                     script_images[i].append(create_write_card(config_game.card_current_arr, i));
                     el.classList.remove("_unrotate");
-                    el.classList.add("_rotate");
                     el.dataset.number = config_game.card_numbers[i];
                     el.dataset.suit = config_game.card_suits[i];
+                    setTimeout((() => {
+                        el.classList.add("_rotate");
+                    }), 200);
                 }), 500);
             }
         }));

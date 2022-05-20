@@ -242,6 +242,11 @@
     }
     function create_change_cards() {
         config_game.arr_collision = [];
+        setTimeout((() => {
+            document.querySelectorAll(".cards-game__image img").forEach((el => {
+                if (!el.closest("_selected") && el.classList.contains("tail")) el.remove();
+            }));
+        }), 500);
         script_images.forEach(((el, i) => {
             if (!el.classList.contains("_selected")) {
                 el.classList.remove("_rotate");

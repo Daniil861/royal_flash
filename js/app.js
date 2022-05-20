@@ -244,7 +244,7 @@
         config_game.arr_collision = [];
         setTimeout((() => {
             document.querySelectorAll(".cards-game__image img").forEach((el => {
-                if (!el.closest("_selected") && el.classList.contains("tail")) el.remove();
+                if (!el.closest("._selected") && el.classList.contains("tail")) el.remove();
             }));
         }), 500);
         script_images.forEach(((el, i) => {
@@ -613,6 +613,7 @@
         }
         if (targetElement.closest(".cards__button") && targetElement.closest(".cards__item_3")) choice_card(3, config_shop.price_card_3);
         if (targetElement.closest(".cards-game__button") && 1 == targetElement.closest(".cards-game__button").dataset.target) {
+            document.querySelector(".cards-game__button").classList.add("_hide");
             reset_game();
             create_cards();
             setTimeout((() => {
@@ -624,6 +625,7 @@
                     draw_inner_draw_button();
                     find_cards_without_collision();
                 } else draw_inner_collect_button();
+                document.querySelector(".cards-game__button").classList.remove("_hide");
             }), 3e3);
             setTimeout((() => {
                 console.log(`config_game.arr_collision (здесь номера, которые совпали) - ${config_game.arr_collision}`);
@@ -634,6 +636,7 @@
             }), 4e3);
         }
         if (targetElement.closest(".cards-game__button") && 2 == targetElement.closest(".cards-game__button").dataset.target) {
+            document.querySelector(".cards-game__button").classList.add("_hide");
             setTimeout((() => {
                 create_change_cards();
                 if (document.querySelector(".cards-game__coin")) document.querySelectorAll(".cards-game__coin").forEach((el => el.remove()));
@@ -651,11 +654,18 @@
             setTimeout((() => {
                 check_collisions();
                 draw_inner_collect_button();
+                document.querySelector(".cards-game__button").classList.remove("_hide");
             }), 3e3);
         }
         if (targetElement.closest(".cards-game__button") && 3 == targetElement.closest(".cards-game__button").dataset.target) {
+            document.querySelector(".cards-game__button").classList.add("_hide");
             add_money(config_game.count_win, ".check", 1e3, 2e3);
-            reset_game();
+            setTimeout((() => {
+                reset_game();
+            }), 500);
+            setTimeout((() => {
+                document.querySelector(".cards-game__button").classList.remove("_hide");
+            }), 1e3);
         }
     }));
     window["FLS"] = true;

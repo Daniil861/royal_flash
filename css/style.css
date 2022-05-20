@@ -468,8 +468,13 @@ body._hold {
 
 .bg {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(87, 87, 87, 0.7) 100%);
-  border: 3px solid #6d6d6d;
-  border-radius: 30px;
+}
+.bg_bottom {
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  border-top: 3px solid #6d6d6d;
+  border-left: 3px solid #6d6d6d;
+  border-right: 3px solid #6d6d6d;
 }
 
 .main__body {
@@ -951,7 +956,15 @@ body._hold {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(87, 87, 87, 0.7) 100%);
   border: 3px solid #ffffff;
   border-radius: 30px;
+  position: relative;
+  top: 0;
   transition: all 0.3s ease 0s;
+}
+.cards-game__button._hide {
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  top: -0.625rem;
 }
 .cards-game__button:active {
   transform: scale(0.97);
@@ -1109,12 +1122,21 @@ body._hold {
   visibility: hidden;
 }
 
+.footer-game {
+  display: flex;
+  align-items: flex-end;
+}
 .footer-game__body {
   display: grid;
   grid-template-columns: 2fr 1fr 3fr;
-  min-height: 100%;
-  position: relative;
-  top: 1.875rem;
+  column-gap: 0.625rem;
+  min-height: 2.5rem;
+  width: 100%;
+}
+@media (min-width: 40.625em) {
+  .footer-game__body {
+    min-height: 3.4375rem;
+  }
 }
 .footer-game__win-box {
   min-height: 100%;
